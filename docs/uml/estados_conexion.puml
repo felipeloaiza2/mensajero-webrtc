@@ -1,0 +1,24 @@
+@startuml estados_conexion
+' Diagrama UML de estados de la conexión entre pares (Jhon Felipe Loaiza Restrepo)
+skinparam shadowing false
+skinparam dpi 220
+skinparam defaultFontName Liberation Sans
+skinparam defaultFontSize 11
+skinparam StateBackgroundColor #EAF1F8
+skinparam StateBorderColor #355C7D
+skinparam ArrowColor #444444
+skinparam nodesep 15
+skinparam ranksep 22
+
+[*] --> Inactivo
+Inactivo --> Señalizando : «Llamar» u oferta
+Señalizando --> connecting : answer aplicada
+connecting --> connected : ICE + DTLS ok
+connecting --> failed : sin ruta ICE
+connected --> disconnected : se pierde la ruta
+disconnected --> connected : se recupera
+disconnected --> failed : tiempo agotado
+connected --> closed : «Colgar»
+failed --> closed : error en la UI
+closed --> [*]
+@enduml

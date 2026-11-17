@@ -1,0 +1,33 @@
+@startuml secuencia_archivo
+' Diagrama UML de secuencia: envío de un archivo por fragmentos (Jhon Felipe Loaiza Restrepo)
+skinparam shadowing false
+skinparam dpi 220
+skinparam defaultFontName Liberation Sans
+skinparam defaultFontSize 11
+skinparam sequenceMessageAlign center
+skinparam NoteBackgroundColor #FFF8DC
+skinparam ArrowColor #333333
+skinparam ParticipantBackgroundColor #EAF1F8
+skinparam ParticipantBorderColor #355C7D
+hide footbox
+
+participant "Emisor\n(navegador A)" as EA
+participant "Receptor\n(navegador B)" as RB
+
+note over EA, RB : RTCDataChannel «file» (fiable y ordenado, SCTP sobre DTLS) ya abierto por la conexión P2P
+rnote over EA : el usuario elige un archivo (≥ 20 MB)\nSHA-256 con crypto.subtle.digest()
+EA -> RB : meta {name, size, mime, chunks, sha256}
+rnote over RB : reserva el búfer; muestra «Recibiendo…»
+loop para cada fragmento i (16 KiB)
+  EA -> RB : chunk i  (ArrayBuffer)
+  rnote over RB : acumula bytes y actualiza la barra de progreso
+end
+note over EA : si bufferedAmount supera el límite superior,\nespera el evento «bufferedamountlow»
+EA -> RB : {type:"eof"}
+rnote over RB : arma el Blob y calcula su SHA-256
+alt SHA-256 y tamaño coinciden
+  RB -> EA : {type:"ack", ok:true}  →  el receptor ofrece descarga o reproducción
+else no coinciden
+  RB -> EA : {type:"ack", ok:false}  →  «Archivo dañado, reintentar»
+end
+@enduml

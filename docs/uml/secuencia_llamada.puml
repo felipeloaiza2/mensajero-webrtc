@@ -1,0 +1,40 @@
+@startuml secuencia_llamada
+' Diagrama UML de secuencia: inicio de una videollamada (Jhon Felipe Loaiza Restrepo)
+skinparam shadowing false
+skinparam dpi 220
+skinparam defaultFontName Liberation Sans
+skinparam defaultFontSize 11
+skinparam sequenceMessageAlign center
+skinparam NoteBackgroundColor #FFF8DC
+skinparam ArrowColor #333333
+skinparam ParticipantBackgroundColor #EAF1F8
+skinparam ParticipantBorderColor #355C7D
+hide footbox
+
+participant "Navegador A\n(ana@node-a)" as NA
+participant "Nodo A" as SA
+participant "Nodo B" as SB
+participant "Navegador B\n(beto@node-b)" as NB
+
+== Oferta y respuesta (señalización por los nodos) ==
+rnote over NA : clic en «Llamar»: getUserMedia() + addTrack()\ncreateOffer() + setLocalDescription(offer)
+NA -> SA : {type:"offer", from:"ana@node-a", to:"beto@node-b", data:{sdp}}
+SA -> SB : reenvía por WS /peer
+SB -> NB : {type:"offer", ...}
+rnote over NB : setRemoteDescription(offer) + getUserMedia() + addTrack()\ncreateAnswer() + setLocalDescription(answer)
+NB -> SB : {type:"answer", from:"beto@node-b", to:"ana@node-a", data:{sdp}}
+SB -> SA : reenvía por WS /peer
+SA -> NA : {type:"answer", ...}  →  setRemoteDescription(answer)
+
+== Candidatos ICE (trickle, en ambos sentidos) ==
+loop mientras haya candidatos
+  NA -> SA : {type:"candidate", to:"beto@node-b", data:{candidate}}
+  SA -> SB : reenvía
+  SB -> NB : candidate  →  addIceCandidate()
+end
+note over SA, SB : B envía sus candidatos por el camino inverso (NB → Nodo B → Nodo A → NA)
+
+== Conexión directa (los nodos ya no intervienen) ==
+NA <-> NB : comprobaciones ICE (STUN/UDP) y handshake DTLS
+NA <-> NB : audio y video (SRTP) + DataChannel (SCTP)
+@enduml

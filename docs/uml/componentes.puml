@@ -1,0 +1,62 @@
+@startuml componentes
+' Diagrama UML de componentes - Mensajero WebRTC (Jhon Felipe Loaiza Restrepo)
+skinparam shadowing false
+skinparam dpi 220
+skinparam defaultFontName Liberation Sans
+skinparam defaultFontSize 11
+skinparam componentStyle uml2
+skinparam ArrowColor #444444
+skinparam ComponentBorderColor #355C7D
+skinparam ComponentBackgroundColor #EAF1F8
+skinparam PackageBorderColor #999999
+skinparam PackageBackgroundColor #FAFAFA
+skinparam InterfaceBackgroundColor #FFFFFF
+skinparam nodesep 22
+skinparam ranksep 32
+
+package "Navegador (HTML + CSS + JavaScript)" as CLI {
+  component "Interfaz web (UI)" as UI
+  component "Transferencia\nde archivos" as File
+  component "Conexión entre pares\nRTCPeerConnection" as Peer
+  component "Captura de medios\ngetUserMedia" as Media
+  component "Chat" as Chat
+  component "Cliente de\nseñalización" as SigC
+}
+
+component "Proxy HTTPS\n(Caddy)" as Proxy
+component "STUN / TURN\n(coturn, opcional)" as Turn
+
+package "Nodo A / Nodo B (contenedor Docker con Node.js)" as NODO {
+  component "Servidor web\nestático" as Static
+  component "Servidor de\nseñalización (ws)" as Sig
+  component "Enlace entre\nnodos" as Link
+  component "Registro de\neventos (logs)" as Log
+}
+
+() "ISignaling\n(mensajes JSON)" as ISig
+() "WS /ws" as IWS
+() "HTTP" as IHTTP
+() "WS /peer" as IPEER
+
+UI -down-> File
+UI -down-> Peer
+UI -down-> Media
+UI -down-> Chat
+File -right-> Peer : RTCDataChannel
+Peer -right-> Media : MediaStream
+Chat -down-> ISig : requiere
+Peer -down-> ISig : requiere
+SigC -up- ISig
+
+SigC -down-> Proxy : WSS
+UI -right-> Proxy : HTTPS
+Proxy -down-> IWS
+Proxy -down-> IHTTP
+Sig -up- IWS
+Static -up- IHTTP
+Sig -right-> Link : reenvía al\notro nodo
+Link -right- IPEER
+Sig -down-> Log
+Link -down-> Log
+Peer ..> Turn : ICE (STUN/TURN)\nUDP 3478
+@enduml

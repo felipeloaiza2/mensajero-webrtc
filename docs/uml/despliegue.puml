@@ -1,0 +1,39 @@
+@startuml despliegue
+' Diagrama UML de despliegue - Mensajero WebRTC (Jhon Felipe Loaiza Restrepo)
+skinparam shadowing false
+skinparam dpi 220
+skinparam defaultFontName Liberation Sans
+skinparam defaultFontSize 11
+skinparam ArrowColor #444444
+skinparam nodesep 35
+skinparam ranksep 45
+skinparam NodeBackgroundColor #EAF1F8
+skinparam NodeBorderColor #355C7D
+skinparam CloudBackgroundColor #F5F5F5
+skinparam NoteBackgroundColor #FFF8DC
+
+node "Equipo anfitrión (Windows + Docker Desktop)" as HOST {
+  node "Navegador A" as BA
+  node "Navegador B" as BB
+  node "Red Docker «mensajero-net»\n(bridge definida por el usuario, DNS interno 127.0.0.11)" as NET {
+    node "proxy\n«contenedor Caddy»" as PX
+    node "node-a\n«contenedor Node.js»\nserver.js, puerto interno 3000" as NA
+    node "node-b\n«contenedor Node.js»\nserver.js, puerto interno 3000" as NB
+    node "coturn\n«contenedor, opcional»" as TU
+  }
+}
+cloud "Internet" as NETW {
+  node "Servidor STUN\npúblico" as STUN
+}
+
+BB <-left-> BA : <color:#2E7D32><b>SRTP + SCTP/DTLS sobre UDP\n<color:#2E7D32><b>puertos efímeros (ICE)
+BA -down-> PX : HTTPS / WSS\nTCP 8443
+BB -down-> PX : HTTPS / WSS\nTCP 9443
+PX -down-> NA : HTTP / WS\nTCP 3000
+PX -down-> NB : HTTP / WS\nTCP 3000
+NA <-right-> NB : WebSocket\nws://node-b:3000/peer
+BA .up.> STUN : STUN\nUDP 3478
+BB .down.> TU : TURN (solo redes distintas)\nUDP/TCP 3478
+NB -[hidden]right- TU
+
+@enduml
