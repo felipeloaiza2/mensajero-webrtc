@@ -1,0 +1,16 @@
+{
+  "name": "mensajero-webrtc-server",
+  "version": "0.1.0",
+  "description": "Servidor de señalización del mensajero WebRTC (Sistemas Distribuidos, UTP)",
+  "main": "server.js",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test/e2e.js"
+  },
+  "engines": { "node": ">=22" },
+  "dependencies": {
+    "express": "^4.21.2",
+    "ws": "^8.18.0"
+  }
+}
