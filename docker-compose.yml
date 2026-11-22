@@ -1,0 +1,29 @@
+# Dos nodos del mensajero en una red bridge definida por el usuario.
+# Arranque:  docker compose up --build
+services:
+  node-a:
+    build: ./server
+    environment:
+      NODE_ID: node-a
+      # node-a abre el enlace hacia node-b usando el NOMBRE del servicio (DNS interno de Docker)
+      PEER_URL: ws://node-b:3000/peer
+    ports:
+      - "8081:3000"          # anfitrión:contenedor
+    networks: [mensajero-net]
+    depends_on:
+      node-b:
+        condition: service_healthy
+    restart: unless-stopped
+
+  node-b:
+    build: ./server
+    environment:
+      NODE_ID: node-b        # sin PEER_URL: acepta el enlace que abre node-a
+    ports:
+      - "8082:3000"
+    networks: [mensajero-net]
+    restart: unless-stopped
+
+networks:
+  mensajero-net:
+    driver: bridge
